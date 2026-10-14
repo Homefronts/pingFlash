@@ -53,7 +53,7 @@ Vencord loads this from `src/userplugins/pingFlash/`, as a direct child of `user
 
 ## Install
 
-1. Install [Vencord from source](https://docs.vencord.dev/installing/).
+1. Install [Vencord](https://docs.vencord.dev/installing/) a custom Discord client.
 2. Copy `plugins/pingFlash` to `src/userplugins/pingFlash`.
 3. From the Vencord checkout, run `pnpm install --frozen-lockfile`, then `pnpm build`.
 4. Quit Discord from the tray and open it again.

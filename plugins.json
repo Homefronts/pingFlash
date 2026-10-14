@@ -1,0 +1,10 @@
+{
+  "name": "Vencord Plugins",
+  "plugins": [
+    {
+      "name": "pingFlash",
+      "description": "Pulses the server icon that just played a notification sound. Hover it to see the channel and the message.",
+      "path": "plugins/pingFlash"
+    }
+  ]
+}

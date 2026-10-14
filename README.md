@@ -41,7 +41,13 @@
                   (______________________________________________________)
 
 
-A server notification rings that server's icon. Hover the icon for a card with the server, the channel, the sender, and a short line of the message.
+A Solution to an odd problem. 
+
+Have you ever experienced being in too many discord servers and getting pinged from God knows where? 
+
+If so, you're not alone and this plugin hopefully fixes it! :)
+
+When you're pinged from schrodingers server, the plugin shows a visible pulse around the server, when you then hover over the server it shows the user who pinged you, the channel the message is in, and the contents of the message. (not including images.)
 
 Vencord loads this from `src/userplugins/pingFlash/`, as a direct child of `userplugins`. Copy the `plugins/pingFlash` folder there. A junction whose target sits outside the Vencord checkout makes the build fail to resolve `@utils` and `@webpack`. Do not put this repository root into `src/userplugins`. An empty file or empty folder there makes the build throw `TypeError: Cannot read properties of undefined (reading 'localeCompare')`.
 

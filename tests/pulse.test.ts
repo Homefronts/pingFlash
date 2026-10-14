@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { acceptPlayedSound, cardForHover, PULSE_MS, type IncomingSound, type Pulse } from "../plugins/pingFlash/pulse.ts";
+import { acceptPlayedSound, cardForHover, holdCard, PULSE_MS, type IncomingSound, type Pulse } from "../plugins/pingFlash/pulse.ts";
 import type { RailSnapshot } from "../plugins/pingFlash/target.ts";
 
 const rail: RailSnapshot = {
@@ -28,8 +28,23 @@ test("starts a 3 second pulse and shows the card only on that icon", () => {
   assert.equal(pulse?.card.authorName, "Alex");
   assert.deepEqual(cardForHover(pulse, "g1", 1000), pulse?.card);
   assert.equal(cardForHover(pulse, "g2", 1000), null);
-  assert.equal(cardForHover(pulse, "g1", 1000 + PULSE_MS), null);
+  assert.deepEqual(cardForHover(pulse, "g1", 1000 + PULSE_MS), pulse?.card);
+  assert.equal(cardForHover(pulse, null, 1000 + PULSE_MS), null);
   assert.equal(cardForHover(pulse, null, 1000), null);
+});
+
+test("the card does not return after the pointer leaves the icon", () => {
+  const pulse = acceptPlayedSound(null, sound(), rail, 1000) as Pulse;
+  const idle = { engaged: false, dismissed: false };
+  const waiting = holdCard(pulse, null, idle);
+  assert.equal(waiting.card, null);
+  assert.equal(waiting.hold.dismissed, false);
+  const showing = holdCard(pulse, "g1", waiting.hold);
+  assert.deepEqual(showing.card, pulse.card);
+  const left = holdCard(pulse, null, showing.hold);
+  assert.equal(left.card, null);
+  assert.equal(left.hold.dismissed, true);
+  assert.equal(holdCard(pulse, "g1", left.hold).card, null);
 });
 
 test("a newer guild sound replaces the pulse", () => {

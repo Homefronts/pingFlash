@@ -19,6 +19,7 @@ test("a press on the card stays on the card", () => {
   assert.match(src, /hoveredRailId\(/);
   assert.match(src, /addEventListener\("pointerdown", blockPress, true\)/);
   assert.match(src, /addEventListener\("mouseup", blockPress, true\)/);
+  assert.doesNotMatch(src, /setTimeout\(\(\) => \{\s*pulse = null;/);
   const css = readFileSync(new URL("../plugins/pingFlash/style.css", import.meta.url), "utf8");
   assert.match(css, /left:\s*-8px/);
   assert.match(css, /right:\s*-8px/);

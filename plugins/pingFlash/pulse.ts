@@ -60,11 +60,28 @@ export function acceptPlayedSound(
 
 export function cardForHover(
   pulse: Pulse | null,
-  hoveredVisibleId: string | null,
-  now: number
+  hoveredVisibleId: string | null
 ): CardContent | null {
   if (!pulse) return null;
   if (hoveredVisibleId !== pulse.visibleId) return null;
-  if (now >= pulse.startedAt + PULSE_MS) return null;
   return pulse.card;
+}
+
+export interface CardHold {
+  engaged: boolean;
+  dismissed: boolean;
+}
+
+export function holdCard(
+  pulse: Pulse | null,
+  hoveredVisibleId: string | null,
+  hold: CardHold
+): { card: CardContent | null; hold: CardHold } {
+  if (!pulse) return { card: null, hold: { engaged: false, dismissed: false } };
+  if (hold.dismissed) return { card: null, hold: { engaged: true, dismissed: true } };
+  if (hoveredVisibleId === pulse.visibleId) {
+    return { card: pulse.card, hold: { engaged: true, dismissed: false } };
+  }
+  if (hold.engaged) return { card: null, hold: { engaged: true, dismissed: true } };
+  return { card: null, hold: { engaged: false, dismissed: false } };
 }

@@ -12,8 +12,9 @@ import { cardPosition } from "./cardPosition.ts";
 import { hoveredRailId } from "./hoverTarget.ts";
 import {
   acceptPlayedSound,
-  cardForHover,
+  holdCard,
   PULSE_MS,
+  type CardHold,
   type IncomingSound,
   type Pulse
 } from "./pulse.ts";
@@ -46,6 +47,7 @@ interface RawMessage {
 }
 
 let pulse: Pulse | null = null;
+let hold: CardHold = { engaged: false, dismissed: false };
 let hoveredId: string | null = null;
 let card: HTMLDivElement | null = null;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -139,19 +141,20 @@ function iconNode(visibleId: string): Element | null {
 }
 
 function syncCard() {
-  const content = cardForHover(pulse, hoveredId, Date.now());
+  const result = holdCard(pulse, hoveredId, hold);
+  hold = result.hold;
   const node = pulse ? iconNode(pulse.visibleId) : null;
-  if (!content || !node) {
+  if (!result.card || !node) {
     hideCard();
     return;
   }
   const el = ensureCard();
   el.hidden = false;
   el.replaceChildren(
-    textLine(content.serverName),
-    textLine(content.channelName, "vc-pingFlash-channel"),
-    textLine(content.authorName),
-    textLine(content.line)
+    textLine(result.card.serverName),
+    textLine(result.card.channelName, "vc-pingFlash-channel"),
+    textLine(result.card.authorName),
+    textLine(result.card.line)
   );
   const rect = node.getBoundingClientRect();
   const pos = cardPosition(
@@ -189,12 +192,15 @@ function applyPulse(next: Pulse | null) {
   if (next === pulse) return;
   clearVisual();
   pulse = next;
+  hold = { engaged: false, dismissed: false };
   if (!pulse) return;
   iconNode(pulse.visibleId)?.classList.add("vc-pingFlash-pulse");
   syncCard();
   timer = setTimeout(() => {
-    pulse = null;
-    clearVisual();
+    for (const node of document.querySelectorAll(".vc-pingFlash-pulse")) {
+      node.classList.remove("vc-pingFlash-pulse");
+    }
+    timer = undefined;
   }, PULSE_MS);
 }
 
@@ -255,6 +261,7 @@ export default definePlugin({
   stop() {
     document.removeEventListener("pointerover", onPointerOver);
     pulse = null;
+    hold = { engaged: false, dismissed: false };
     hoveredId = null;
     clearVisual();
     card?.remove();

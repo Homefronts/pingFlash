@@ -9,6 +9,7 @@ import { findStoreLazy } from "@webpack";
 import { ChannelStore, GuildStore } from "@webpack/common";
 
 import { cardPosition } from "./cardPosition.ts";
+import { hoveredRailId } from "./hoverTarget.ts";
 import {
   acceptPlayedSound,
   cardForHover,
@@ -127,6 +128,8 @@ function ensureCard(): HTMLDivElement {
   card.className = "vc-pingFlash-card";
   card.addEventListener("click", blockPress);
   card.addEventListener("mousedown", blockPress);
+  card.addEventListener("pointerdown", blockPress, true);
+  card.addEventListener("mouseup", blockPress, true);
   document.body.appendChild(card);
   return card;
 }
@@ -196,10 +199,11 @@ function applyPulse(next: Pulse | null) {
 }
 
 function onPointerOver(event: Event) {
-  const node = event.target instanceof Element
-    ? event.target.closest(`[data-list-item-id^="${GUILD_NAV_PREFIX}"]`)
-    : null;
-  hoveredId = node?.getAttribute("data-list-item-id")?.slice(GUILD_NAV_PREFIX.length) ?? null;
+  const target = event.target instanceof Element ? event.target : null;
+  const insideCard = target !== null && card !== null && card.contains(target);
+  const node = target?.closest(`[data-list-item-id^="${GUILD_NAV_PREFIX}"]`) ?? null;
+  const railId = node?.getAttribute("data-list-item-id")?.slice(GUILD_NAV_PREFIX.length) ?? null;
+  hoveredId = hoveredRailId(insideCard, railId, hoveredId);
   syncCard();
 }
 

@@ -19,6 +19,16 @@
   z-index: 10000;
 }
 
+/* The layout gap is 8px. These wings are the hit target across that gap, on either side, so the pointer can enter the card. */
+.vc-pingFlash-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  right: -8px;
+}
+
 .vc-pingFlash-channel {
   color: #00d4ff;
 }

@@ -13,3 +13,13 @@ test("the plugin names pingFlash, guild sounds, and the rail id", () => {
   assert.doesNotMatch(src, /playSound\("message3"\)/);
   assert.match(src, /guildsnav___/);
 });
+
+test("a press on the card stays on the card", () => {
+  const src = readFileSync(new URL("../plugins/pingFlash/index.tsx", import.meta.url), "utf8");
+  assert.match(src, /hoveredRailId\(/);
+  assert.match(src, /addEventListener\("pointerdown", blockPress, true\)/);
+  assert.match(src, /addEventListener\("mouseup", blockPress, true\)/);
+  const css = readFileSync(new URL("../plugins/pingFlash/style.css", import.meta.url), "utf8");
+  assert.match(css, /left:\s*-8px/);
+  assert.match(css, /right:\s*-8px/);
+});

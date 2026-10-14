@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { acceptPlayedSound, cardForHover, holdCard, PULSE_MS, type IncomingSound, type Pulse } from "../plugins/pingFlash/pulse.ts";
+import { acceptPlayedSound, cardForHover, holdCard, pickTestGuildId, PULSE_MS, ringDuration, type IncomingSound, type Pulse } from "../plugins/pingFlash/pulse.ts";
 import type { RailSnapshot } from "../plugins/pingFlash/target.ts";
 
 const rail: RailSnapshot = {
@@ -62,6 +62,17 @@ test("a DM sound and an off-screen guild leave the current pulse", () => {
   assert.equal(dm, first);
   const hidden = acceptPlayedSound(first, sound({ guildId: "missing", guildName: "Hidden" }), rail, 1500);
   assert.equal(hidden, first);
+});
+
+test("a test rings the first visible server", () => {
+  const ids = ["off", "g1", "g1", "g9", "g2"];
+  assert.equal(pickTestGuildId(ids, rail), "g1");
+  assert.equal(pickTestGuildId(["off", "missing"], rail), null);
+});
+
+test("a test ring stays up and a real ring ends at 3 seconds", () => {
+  assert.equal(ringDuration(true), null);
+  assert.equal(ringDuration(false), PULSE_MS);
 });
 
 test("mention sounds and collapsed folders pulse the folder and name the guild", () => {

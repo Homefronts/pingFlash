@@ -4,16 +4,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import definePlugin from "@utils/types";
+import { definePluginSettings } from "@api/Settings";
+import definePlugin, { OptionType } from "@utils/types";
 import { findStoreLazy } from "@webpack";
-import { ChannelStore, GuildStore } from "@webpack/common";
+import { Button, ChannelStore, GuildStore } from "@webpack/common";
 
 import { cardPosition } from "./cardPosition.ts";
 import { hoveredRailId } from "./hoverTarget.ts";
 import {
   acceptPlayedSound,
   holdCard,
-  PULSE_MS,
+  pickTestGuildId,
+  ringDuration,
   type CardHold,
   type IncomingSound,
   type Pulse
@@ -50,6 +52,8 @@ let pulse: Pulse | null = null;
 let hold: CardHold = { engaged: false, dismissed: false };
 let hoveredId: string | null = null;
 let card: HTMLDivElement | null = null;
+let ring: HTMLDivElement | null = null;
+let ringFrame = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
 
 function isImage(attachment: RawAttachment): boolean {
@@ -140,6 +144,71 @@ function iconNode(visibleId: string): Element | null {
   return document.querySelector(`[data-list-item-id="${GUILD_NAV_PREFIX}${visibleId}"]`);
 }
 
+function visualIcon(node: Element): Element {
+  for (const wrapper of node.querySelectorAll("[class*='wrapper']")) {
+    const rect = wrapper.getBoundingClientRect();
+    if (rect.width >= 32 && rect.height >= 32) return wrapper;
+  }
+  return node;
+}
+
+function ensureRing(): HTMLDivElement {
+  if (ring) return ring;
+  ring = document.createElement("div");
+  ring.className = "vc-pingFlash-ring";
+  document.body.appendChild(ring);
+  return ring;
+}
+
+function hideRing() {
+  cancelAnimationFrame(ringFrame);
+  ringFrame = 0;
+  if (ring) ring.hidden = true;
+}
+
+function placeRing() {
+  if (!ring) return;
+  const node = pulse ? iconNode(pulse.visibleId) : null;
+  if (!node) {
+    ring.hidden = true;
+    return;
+  }
+  const rect = visualIcon(node).getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) {
+    ring.hidden = true;
+    return;
+  }
+  ring.hidden = false;
+  ring.style.width = `${rect.width}px`;
+  ring.style.height = `${rect.height}px`;
+  ring.style.left = `${rect.left + rect.width / 2}px`;
+  ring.style.top = `${rect.top + rect.height / 2}px`;
+  ring.style.borderRadius = pulse?.folderId ? "30%" : "50%";
+}
+
+function trackRing() {
+  placeRing();
+  ringFrame = requestAnimationFrame(trackRing);
+}
+
+function showRing() {
+  cancelAnimationFrame(ringFrame);
+  const el = ensureRing();
+  el.hidden = false;
+  el.style.animation = "none";
+  void el.offsetWidth;
+  el.style.animation = "";
+  placeRing();
+  ringFrame = requestAnimationFrame(trackRing);
+}
+
+function endRing() {
+  for (const node of document.querySelectorAll(".vc-pingFlash-pulse")) {
+    node.classList.remove("vc-pingFlash-pulse");
+  }
+  hideRing();
+}
+
 function syncCard() {
   const result = holdCard(pulse, hoveredId, hold);
   hold = result.hold;
@@ -151,10 +220,10 @@ function syncCard() {
   const el = ensureCard();
   el.hidden = false;
   el.replaceChildren(
-    textLine(result.card.serverName),
+    textLine(result.card.serverName, "vc-pingFlash-server"),
     textLine(result.card.channelName, "vc-pingFlash-channel"),
-    textLine(result.card.authorName),
-    textLine(result.card.line)
+    textLine(result.card.authorName, "vc-pingFlash-author"),
+    textLine(result.card.line, "vc-pingFlash-line")
   );
   const rect = node.getBoundingClientRect();
   const pos = cardPosition(
@@ -182,27 +251,59 @@ function clearTimer() {
 
 function clearVisual() {
   clearTimer();
-  for (const node of document.querySelectorAll(".vc-pingFlash-pulse")) {
-    node.classList.remove("vc-pingFlash-pulse");
-  }
+  endRing();
   hideCard();
 }
 
-function applyPulse(next: Pulse | null) {
+function applyPulse(next: Pulse | null, test = false) {
   if (next === pulse) return;
   clearVisual();
   pulse = next;
   hold = { engaged: false, dismissed: false };
   if (!pulse) return;
   iconNode(pulse.visibleId)?.classList.add("vc-pingFlash-pulse");
+  showRing();
   syncCard();
+  const duration = ringDuration(test);
+  if (duration === null) return;
   timer = setTimeout(() => {
-    for (const node of document.querySelectorAll(".vc-pingFlash-pulse")) {
-      node.classList.remove("vc-pingFlash-pulse");
-    }
+    endRing();
     timer = undefined;
-  }, PULSE_MS);
+  }, duration);
 }
+
+function sendTestNotification() {
+  try {
+    const rail = readRail();
+    const guildIds = SortedGuildStore.getGuildFolders().flatMap(entry => entry.guildIds.map(String));
+    const guildId = pickTestGuildId(guildIds, rail);
+    if (!guildId) return;
+    const next = acceptPlayedSound(pulse, {
+      sound: "message1",
+      guildId,
+      content: "This is a test notification!",
+      authorName: "DEV",
+      guildName: GuildStore.getGuild(guildId)?.name ?? "",
+      channelName: "test",
+      hasImage: false,
+      hasSticker: false,
+      hasAttachment: false,
+      hasEmbed: false
+    }, rail, Date.now());
+    applyPulse(next, true);
+  } catch {
+    // A missing store or rail must not change the current pulse or throw into Discord.
+  }
+}
+
+const settings = definePluginSettings({
+  sendTest: {
+    type: OptionType.COMPONENT,
+    component: () => (
+      <Button onClick={sendTestNotification}>Send a test notification</Button>
+    )
+  }
+});
 
 function onPointerOver(event: Event) {
   const target = event.target instanceof Element ? event.target : null;
@@ -217,6 +318,8 @@ export default definePlugin({
   name: "pingFlash",
   description: "Pulses the server icon that just played a notification sound.",
   authors: [{ name: "Homefronts", id: 0n }],
+  enabledByDefault: true,
+  settings,
   managedStyle: style,
   patches: [
     {
@@ -266,5 +369,7 @@ export default definePlugin({
     clearVisual();
     card?.remove();
     card = null;
+    ring?.remove();
+    ring = null;
   }
 });

@@ -35,6 +35,23 @@ export interface IncomingSound {
 
 const guildSounds = new Set<string>(GUILD_NOTIFICATION_SOUNDS);
 
+export function pickTestGuildId(
+  guildIds: readonly string[],
+  rail: RailSnapshot
+): string | null {
+  const seen = new Set<string>();
+  for (const id of guildIds) {
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    if (visibleTarget(id, rail)) return id;
+  }
+  return null;
+}
+
+export function ringDuration(test: boolean): number | null {
+  return test ? null : PULSE_MS;
+}
+
 export function acceptPlayedSound(
   current: Pulse | null,
   incoming: IncomingSound,

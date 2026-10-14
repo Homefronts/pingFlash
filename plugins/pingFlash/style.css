@@ -1,11 +1,22 @@
 @keyframes vc-pingFlash-ring {
-  0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.85); }
-  100% { box-shadow: 0 0 0 10px rgba(0, 212, 255, 0); }
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.95);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.7);
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0);
+    opacity: 0;
+  }
 }
 
-.vc-pingFlash-pulse {
-  animation: vc-pingFlash-ring 1.1s ease-out infinite;
+.vc-pingFlash-ring {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
   border-radius: 50%;
+  animation: vc-pingFlash-ring 1.1s ease-out infinite;
 }
 
 .vc-pingFlash-card {
@@ -14,9 +25,12 @@
   box-sizing: border-box;
   background: #2b2d31;
   color: #f2f3f5;
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
   z-index: 10000;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 /* The layout gap is 8px. These wings are the hit target across that gap, on either side, so the pointer can enter the card. */
@@ -29,6 +43,22 @@
   right: -8px;
 }
 
+.vc-pingFlash-server {
+  font-weight: 600;
+  font-size: 14px;
+}
+
 .vc-pingFlash-channel {
   color: #00d4ff;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.vc-pingFlash-author {
+  color: #b5bac1;
+  font-size: 12px;
+}
+
+.vc-pingFlash-line {
+  margin-top: 6px;
 }

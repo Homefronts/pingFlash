@@ -12,6 +12,16 @@ test("the plugin names pingFlash, guild sounds, and the rail id", () => {
   }
   assert.doesNotMatch(src, /playSound\("message3"\)/);
   assert.match(src, /guildsnav___/);
+  assert.match(src, /Send a test notification/);
+  assert.match(src, /pickTestGuildId\(/);
+  assert.match(src, /applyPulse\(next, true\)/);
+  assert.match(src, /ringDuration\(/);
+  assert.match(src, /authorName: "DEV"/);
+  assert.match(src, /This is a test notification!/);
+  assert.match(src, /vc-pingFlash-ring/);
+  assert.match(src, /vc-pingFlash-server/);
+  assert.match(src, /vc-pingFlash-author/);
+  assert.match(src, /vc-pingFlash-line/);
 });
 
 test("a press on the card stays on the card", () => {
@@ -23,4 +33,11 @@ test("a press on the card stays on the card", () => {
   const css = readFileSync(new URL("../plugins/pingFlash/style.css", import.meta.url), "utf8");
   assert.match(css, /left:\s*-8px/);
   assert.match(css, /right:\s*-8px/);
+  assert.match(css, /\.vc-pingFlash-ring/);
+  assert.match(css, /pointer-events:\s*none/);
+  assert.match(css, /scale\(1\.7\)/);
+  assert.doesNotMatch(css, /0 0 0 10px/);
+  assert.match(css, /\.vc-pingFlash-server[\s\S]*font-weight:\s*600/);
+  assert.match(css, /\.vc-pingFlash-author[\s\S]*#b5bac1/);
+  assert.match(css, /\.vc-pingFlash-line[\s\S]*margin-top:\s*6px/);
 });

@@ -51,6 +51,10 @@ When you're pinged from schrodingers server, the plugin shows a visible pulse ar
 
 Vencord loads this from `src/userplugins/pingFlash/`, as a direct child of `userplugins`. Copy the `plugins/pingFlash` folder there. A junction whose target sits outside the Vencord checkout makes the build fail to resolve `@utils` and `@webpack`. Do not put this repository root into `src/userplugins`. An empty file or empty folder there makes the build throw `TypeError: Cannot read properties of undefined (reading 'localeCompare')`.
 
+For now until this is potentially pushed to the Vencord plugin repository you'll need to manually install it, below are instructions listed to do that!
+
+Thanks for checking out my plugin, if there are any bugs or issues found please feel free
+
 ## Install
 
 1. Install [Vencord](https://docs.vencord.dev/installing/) a custom Discord client.
